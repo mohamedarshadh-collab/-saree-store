@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import CompleteLook from "../components/CompleteLook.jsx";
+import CustomizeSaree from "../components/CustomizeSaree.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -122,6 +123,7 @@ export default function ProductDetail() {
       </div>
 
       <CompleteLook product={product} />
+      <CustomizeSaree product={product} />
 
       <section className="product-reviews" aria-labelledby="reviews-heading">
         <div className="product-reviews__head">

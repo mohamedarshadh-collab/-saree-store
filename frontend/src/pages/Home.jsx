@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@mui/material";
 import { getProducts } from "../api/api";
 import ProductCard from "../components/ProductCard.jsx";
 import LoadingState from "../components/LoadingState.jsx";
@@ -45,9 +46,9 @@ export default function Home() {
             Discover heirloom-worthy pattu, luminous silks and effortless cottons
             chosen for every celebration and everyday ritual.
           </p>
-          <Link to="/shop" className="btn btn--gold">
+          <Button component={Link} to="/shop" variant="contained" color="secondary">
             Shop Now <span aria-hidden="true">→</span>
-          </Link>
+          </Button>
           <div className="hero__note"><span>30+ styles</span><span>Easy returns</span><span>COD available</span></div>
         </div>
         <div className="hero__image">
@@ -101,19 +102,19 @@ export default function Home() {
           <p>From first glance to the last pleat, find a drape that feels distinctly yours.</p>
         </div>
         <div className="promise-band__actions">
-          <Link to="/wishlist" className="btn btn--gold">Build Your Wishlist</Link>
-          <a className="btn whatsapp-btn" href={whatsappHref} target="_blank" rel="noreferrer">
+          <Button component={Link} to="/wishlist" variant="contained" color="secondary">Build Your Wishlist</Button>
+          <Button component="a" className="whatsapp-btn" href={whatsappHref} target="_blank" rel="noreferrer">
             <span aria-hidden="true">◌</span> Need help choosing a saree?
-          </a>
+          </Button>
         </div>
       </section>
 
       <section className="section">
         <div className="section__head">
           <h2>Trending Now</h2>
-          <Link to="/shop" className="btn btn--outline">
+          <Button component={Link} to="/shop" variant="outlined" color="primary">
             View All
-          </Link>
+          </Button>
         </div>
         <div className="product-grid">
           {loading ? <LoadingState label="Finding favourites" /> : featured.map((p) => (

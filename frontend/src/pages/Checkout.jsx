@@ -43,7 +43,7 @@ export default function Checkout() {
 
     setPlacing(true);
     try {
-      const cartItems = items.map((i) => ({ productId: i.productId, qty: i.qty }));
+      const cartItems = items.map((i) => ({ productId: i.productId, qty: i.qty, customization: i.customization }));
 
       // 1) Create a Razorpay order on our backend (full amount for ONLINE,
       //    just the ₹100 advance for COD)

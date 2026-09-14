@@ -23,17 +23,18 @@ export default function Cart() {
       <div>
         <h2 style={{ marginBottom: 20 }}>Shopping Cart</h2>
         {items.map((item) => (
-          <div className="cart-item" key={item.productId}>
+          <div className="cart-item" key={item.cartItemId || item.productId}>
             <img src={item.image} alt={item.name} />
             <div>
               <div style={{ fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>
                 {item.category}
               </div>
               <div style={{ fontWeight: 600, margin: "4px 0 8px" }}>{item.name}</div>
+              {item.customization && <div className="cart-item__customization">Customized · {item.customization.variant}{item.customization.giftWrap ? " · Gift wrapped" : ""}{item.customization.expressDelivery ? " · Express" : ""}</div>}
               <div className="qty-control">
-                <button onClick={() => updateQty(item.productId, item.qty - 1)}>−</button>
+                <button onClick={() => updateQty(item.cartItemId || item.productId, item.qty - 1)}>−</button>
                 <span style={{ padding: "0 10px" }}>{item.qty}</span>
-                <button onClick={() => updateQty(item.productId, item.qty + 1)}>+</button>
+                <button onClick={() => updateQty(item.cartItemId || item.productId, item.qty + 1)}>+</button>
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -41,7 +42,7 @@ export default function Cart() {
                 ₹{(item.price * item.qty).toLocaleString("en-IN")}
               </div>
               <button
-                onClick={() => removeFromCart(item.productId)}
+                onClick={() => removeFromCart(item.cartItemId || item.productId)}
                 style={{ border: "none", background: "none", color: "var(--danger)", fontSize: 13 }}
               >
                 Remove

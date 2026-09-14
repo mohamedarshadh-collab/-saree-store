@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getProducts } from "../api/api";
 import ProductCard from "../components/ProductCard.jsx";
-import LoadingState from "../components/LoadingState.jsx";
 
 export default function Shop() {
   const [searchParams] = useSearchParams();
@@ -28,7 +27,15 @@ export default function Shop() {
       </div>
 
       {loading ? (
-        <LoadingState label="Loading sarees" />
+        <div className="product-grid">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div className="skeleton-card" key={i}>
+              <div className="skeleton-img" />
+              <div className="skeleton-line" />
+              <div className="skeleton-line short" />
+            </div>
+          ))}
+        </div>
       ) : products.length === 0 ? (
         <div className="empty-state">No sarees found in this category yet.</div>
       ) : (

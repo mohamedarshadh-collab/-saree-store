@@ -12,9 +12,12 @@ export function CartProvider({ children }) {
     localStorage.setItem("saree_cart", JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (product, qty = 1) => {
+  const addToCart = (product, qty = 1, customization = null, customizedPrice = product.price) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === product._id);
+      const cartItemId = customization ? `${product._id}-${Date.now()}` : product._id;
+      const existing = customization
+        ? null
+        : prev.find((i) => i.productId === product._id && !i.customization);
       if (existing) {
         return prev.map((i) =>
           i.productId === product._id ? { ...i, qty: i.qty + qty } : i
@@ -24,11 +27,13 @@ export function CartProvider({ children }) {
         ...prev,
         {
           productId: product._id,
+          cartItemId,
           name: product.name,
           image: product.images?.[0],
-          price: product.price,
+          price: customizedPrice,
           category: product.category,
           qty,
+          customization,
         },
       ];
     });
@@ -36,11 +41,11 @@ export function CartProvider({ children }) {
 
   const updateQty = (productId, qty) => {
     if (qty < 1) return;
-    setItems((prev) => prev.map((i) => (i.productId === productId ? { ...i, qty } : i)));
+    setItems((prev) => prev.map((i) => ((i.cartItemId || i.productId) === productId ? { ...i, qty } : i)));
   };
 
   const removeFromCart = (productId) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+    setItems((prev) => prev.filter((i) => (i.cartItemId || i.productId) !== productId));
   };
 
   const clearCart = () => setItems([]);

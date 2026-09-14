@@ -13,6 +13,29 @@ const razorpay = new Razorpay({
 });
 
 const COD_EXTRA_CHARGE = Number(process.env.COD_EXTRA_CHARGE || 100);
+const BLOUSE_PRICES = { classic: 0, statement: 499, sleeveless: 699 };
+const JEWELLERY_PRICES = { "temple-set": 1299, "pearl-set": 899 };
+const ACCESSORY_PRICES = { "silk-potli": 699, "brocade-clutch": 899 };
+const GIFT_WRAP_PRICE = 149;
+const EXPRESS_PRICE = 249;
+
+function customizationCharge(customization = {}) {
+  const blouseCharge = BLOUSE_PRICES[customization.blouseStyle];
+  if (blouseCharge === undefined) throw new Error("Invalid blouse customization");
+  const jewellery = Array.isArray(customization.jewellery) ? customization.jewellery : [];
+  const accessories = Array.isArray(customization.accessories) ? customization.accessories : [];
+  const jewelleryCharge = jewellery.reduce((total, id) => {
+    if (JEWELLERY_PRICES[id] === undefined) throw new Error("Invalid jewellery customization");
+    return total + JEWELLERY_PRICES[id];
+  }, 0);
+  const accessoryCharge = accessories.reduce((total, id) => {
+    if (ACCESSORY_PRICES[id] === undefined) throw new Error("Invalid accessory customization");
+    return total + ACCESSORY_PRICES[id];
+  }, 0);
+  return blouseCharge + jewelleryCharge + accessoryCharge +
+    (customization.giftWrap ? GIFT_WRAP_PRICE : 0) +
+    (customization.expressDelivery ? EXPRESS_PRICE : 0);
+}
 
 // Helper: recompute subtotal server-side from cart items (never trust client price)
 async function computeSubtotal(items) {
@@ -36,13 +59,16 @@ async function computeSubtotal(items) {
       error.statusCode = 400;
       throw error;
     }
-    subtotal += product.price * qty;
+    const customization = it.customization || null;
+    const itemPrice = product.price + (customization ? customizationCharge(customization) : 0);
+    subtotal += itemPrice * qty;
     verifiedItems.push({
       product: product._id,
       name: product.name,
       image: product.images?.[0] || "",
-      price: product.price,
+      price: itemPrice,
       qty,
+      customization,
     });
   }
   return { subtotal, verifiedItems };

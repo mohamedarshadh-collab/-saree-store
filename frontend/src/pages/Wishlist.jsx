@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@mui/material";
 import ProductCard from "../components/ProductCard.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 
@@ -20,7 +21,9 @@ export default function Wishlist() {
           <div className="wishlist-empty__icon" aria-hidden="true">♡</div>
           <h3>Your wishlist is waiting</h3>
           <p>Save sarees you love and come back to them anytime.</p>
-          <Link to="/shop" className="btn">Explore Sarees</Link>
+          <Button component={Link} to="/shop" variant="contained" color="secondary">
+            Explore Sarees
+          </Button>
         </div>
       ) : (
         <div className="product-grid">
