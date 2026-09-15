@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 
 const CATEGORIES = [
-  "Pattu Sarees",
-  "Fancy Sarees",
-  "Georgette Sarees",
-  "Party Wear Sarees",
-  "Cotton Sarees",
-  "Others",
+  { label: "Silk Sarees", value: "Pattu Sarees" },
+  { label: "Bridal", value: "Fancy Sarees" },
+  { label: "Festive", value: "Party Wear Sarees" },
+  { label: "Cotton", value: "Cotton Sarees" },
+  { label: "Designer", value: "Fancy Sarees" },
+  { label: "New In", value: "Others" },
 ];
 
 export default function Navbar() {
   const { totalQty } = useCart();
   const { wishlistCount } = useWishlist();
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -23,39 +26,67 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    setSearchTerm(searchParams.get("search") || "");
+  }, [searchParams]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const trimmed = searchTerm.trim();
+
+    if (!trimmed) {
+      navigate("/shop");
+      return;
+    }
+
+    navigate(`/shop?search=${encodeURIComponent(trimmed)}`);
+  };
+
   return (
     <>
-      <div className="announce-bar">
-        ✦ Free shipping on prepaid orders &nbsp;·&nbsp; Cash on Delivery available &nbsp;·&nbsp; Handpicked sarees, delivered with care ✦
-      </div>
       <header className={`navbar ${scrolled ? "scrolled" : ""}`}>
         <div className="navbar__top">
-          <Link to="/" className="brand">
+          <Link to="/" className="brand" aria-label="Paisley and Pallu home">
             <span className="brand-mark">P</span>
-            Paisley &amp; <span style={{ color: "var(--gold)" }}>Pallu</span>
           </Link>
-          <nav className="navbar__actions">
-            <Link to="/orders">My Orders</Link>
-            <Link to="/wishlist">
-              Wishlist
+
+          <nav className="navbar__menu" aria-label="Main categories">
+            {CATEGORIES.map(({ label, value }) => (
+              <NavLink key={label} to={`/shop?category=${encodeURIComponent(value)}`} className="navbar__menu-link">
+                {label}
+                {label === "New In" && <span className="new-pill">NEW</span>}
+              </NavLink>
+            ))}
+          </nav>
+
+          <form className="navbar__search-wrap" role="search" onSubmit={handleSearchSubmit}>
+            <span className="search-icon" aria-hidden="true">⌕</span>
+            <input
+              type="text"
+              placeholder="Search for sarees, brands and more"
+              aria-label="Search products"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </form>
+
+          <nav className="navbar__actions" aria-label="Account actions">
+            <Link to="/orders" className="profile-btn" aria-label="My orders">
+              <span>◔</span>
+              <span>Account</span>
+            </Link>
+            <Link to="/wishlist" className="action-link">
+              <span>♡</span>
+              <span>Wishlist</span>
               {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
             </Link>
-            <Link to="/cart">
-              Cart
+            <Link to="/cart" className="action-link">
+              <span>👜</span>
+              <span>Bag</span>
               {totalQty > 0 && <span className="cart-badge">{totalQty}</span>}
             </Link>
           </nav>
         </div>
-        <nav className="navbar__categories">
-          <NavLink to="/shop" end>
-            All Sarees
-          </NavLink>
-          {CATEGORIES.map((c) => (
-            <NavLink key={c} to={`/shop?category=${encodeURIComponent(c)}`}>
-              {c}
-            </NavLink>
-          ))}
-        </nav>
       </header>
     </>
   );

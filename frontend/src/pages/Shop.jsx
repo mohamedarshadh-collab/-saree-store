@@ -6,21 +6,24 @@ import ProductCard from "../components/ProductCard.jsx";
 export default function Shop() {
   const [searchParams] = useSearchParams();
   const category = searchParams.get("category") || "All";
+  const search = searchParams.get("search") || "";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    getProducts({ category }).then((res) => {
+    getProducts({ category, search }).then((res) => {
       setProducts(res.data);
       setLoading(false);
     });
-  }, [category]);
+  }, [category, search]);
+
+  const title = search ? `Search results for "${search}"` : category === "All" ? "All Sarees" : category;
 
   return (
     <section className="section">
       <div className="section__head">
-        <h2>{category === "All" ? "All Sarees" : category}</h2>
+        <h2>{title}</h2>
         <span style={{ color: "var(--ink-soft)", fontSize: 14 }}>
           {products.length} sarees
         </span>
@@ -37,7 +40,9 @@ export default function Shop() {
           ))}
         </div>
       ) : products.length === 0 ? (
-        <div className="empty-state">No sarees found in this category yet.</div>
+        <div className="empty-state">
+          {search ? `No sarees found for "${search}". Try another keyword.` : "No sarees found in this category yet."}
+        </div>
       ) : (
         <div className="product-grid">
           {products.map((p) => (

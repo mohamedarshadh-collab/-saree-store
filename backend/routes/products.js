@@ -8,7 +8,20 @@ router.get("/", async (req, res) => {
     const { category, search } = req.query;
     const filter = {};
     if (category && category !== "All") filter.category = category;
-    if (search) filter.name = { $regex: search, $options: "i" };
+
+    if (search) {
+      const keyword = String(search).trim();
+
+      if (keyword) {
+        filter.$or = [
+          { name: { $regex: keyword, $options: "i" } },
+          { description: { $regex: keyword, $options: "i" } },
+          { category: { $regex: keyword, $options: "i" } },
+          { fabric: { $regex: keyword, $options: "i" } },
+          { color: { $regex: keyword, $options: "i" } },
+        ];
+      }
+    }
 
     const products = await Product.find(filter).sort({ createdAt: -1 });
     res.json(products);

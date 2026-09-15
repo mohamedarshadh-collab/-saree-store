@@ -47,6 +47,8 @@ export default function App() {
           <div>
             <h4>Stay in Touch</h4>
             <p>Get first access to new arrivals and festive offers.</p>
+            <span>hello@paisleypallu.com</span>
+            <span>+91 98765 43210</span>
           </div>
         </div>
         <div className="footer-bottom">

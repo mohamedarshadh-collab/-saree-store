@@ -1,72 +1,75 @@
 import { createTheme } from "@mui/material/styles";
 
-const wine = "#6e1423";
-const wineDark = "#4a0d18";
-const gold = "#b8873b";
-const ivory = "#fdf9f3";
-const ink = "#2a1c1c";
-const inkSoft = "#6b5a54";
+const rose = "#ff3f6c";
+const roseDark = "#e62b5d";
+const blush = "#fff1f5";
+const bg = "#f5f5f6";
+const card = "#ffffff";
+const ink = "#282c3f";
+const inkSoft = "#7e818d";
+const stroke = "#e9e9eb";
+const success = "#03a685";
 
 const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: wine,
-      dark: wineDark,
-      contrastText: ivory,
+      main: rose,
+      dark: roseDark,
+      contrastText: "#fff",
     },
     secondary: {
-      main: gold,
-      dark: "#9c6f2c",
+      main: ink,
+      dark: "#1d2333",
       contrastText: "#fff",
     },
     background: {
-      default: ivory,
-      paper: "#fffdf9",
+      default: bg,
+      paper: card,
     },
     text: {
       primary: ink,
       secondary: inkSoft,
     },
-    divider: "#e6d9c7",
+    divider: stroke,
   },
   typography: {
-    fontFamily: '"Manrope", sans-serif',
+    fontFamily: "Inter, 'Segoe UI', sans-serif",
     h1: {
-      fontFamily: '"Cormorant Garamond", serif',
-      fontWeight: 600,
-      letterSpacing: 0,
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontWeight: 800,
+      letterSpacing: "-0.04em",
     },
     h2: {
-      fontFamily: '"Cormorant Garamond", serif',
-      fontWeight: 600,
-      letterSpacing: 0,
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontWeight: 800,
+      letterSpacing: "-0.04em",
     },
     h3: {
-      fontFamily: '"Cormorant Garamond", serif',
-      fontWeight: 600,
-      letterSpacing: 0,
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontWeight: 700,
+      letterSpacing: "-0.03em",
     },
     button: {
-      fontFamily: '"Manrope", sans-serif',
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
       fontWeight: 700,
       textTransform: "none",
       letterSpacing: 0.2,
     },
   },
   shape: {
-    borderRadius: 2,
+    borderRadius: 14,
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: ivory,
+          backgroundColor: bg,
           color: ink,
         },
         "::selection": {
-          backgroundColor: "#e4c48b",
-          color: wineDark,
+          backgroundColor: "#ffd9e3",
+          color: roseDark,
         },
       },
     },
@@ -76,18 +79,20 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 2,
-          padding: "11px 24px",
-          transition: "transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease",
+          borderRadius: 999,
+          padding: "11px 22px",
+          transition: "transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease",
+          fontWeight: 700,
           "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: "0 10px 20px rgba(74, 13, 24, 0.14)",
+            transform: "translateY(-1px)",
+            boxShadow: "0 10px 18px rgba(255, 63, 108, 0.15)",
           },
         },
-        containedSecondary: {
+        containedPrimary: {
+          background: `linear-gradient(135deg, ${rose} 0%, ${roseDark} 100%)`,
           color: "#fff",
           "&:hover": {
-            backgroundColor: "#9c6f2c",
+            background: `linear-gradient(135deg, ${roseDark} 0%, ${roseDark} 100%)`,
           },
         },
       },
@@ -96,6 +101,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: "none",
+          borderRadius: 18,
         },
       },
     },
@@ -107,9 +113,9 @@ const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 2,
+          borderRadius: 12,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: gold,
+            borderColor: rose,
             borderWidth: 2,
           },
         },

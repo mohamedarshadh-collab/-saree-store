@@ -20,10 +20,26 @@ const whatsappHref = whatsappNumber
   ? `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${whatsappMessage}`
   : `https://wa.me/?text=${whatsappMessage}`;
 
+const HERO_IMAGES = [
+  {
+    src: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=80",
+    alt: "Woman in an elegant purple saree",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=1200&q=80",
+    alt: "Woman wearing a traditional saree",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=80",
+    alt: "Woman in a festive saree look",
+  },
+];
+
 export default function Home() {
   const [featured, setFeatured] = useState([]);
   const [categoryImages, setCategoryImages] = useState({});
   const [loading, setLoading] = useState(true);
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
 
   useEffect(() => {
     getProducts().then((res) => {
@@ -36,29 +52,46 @@ export default function Home() {
     }).finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const heroTimer = window.setInterval(() => {
+      setHeroImageIndex((currentIndex) => (currentIndex + 1) % HERO_IMAGES.length);
+    }, 3000);
+
+    return () => window.clearInterval(heroTimer);
+  }, []);
+
   return (
     <>
-      <section className="hero">
-        <div className="hero__content">
-          <div className="hero__eyebrow">Handpicked for the season</div>
-          <h1>Six yards of grace, made unforgettable.</h1>
-          <p>
-            Discover heirloom-worthy pattu, luminous silks and effortless cottons
-            chosen for every celebration and everyday ritual.
-          </p>
-          <Button component={Link} to="/shop" variant="contained" color="secondary">
-            Shop Now <span aria-hidden="true">→</span>
-          </Button>
-          <div className="hero__note"><span>30+ styles</span><span>Easy returns</span><span>COD available</span></div>
+      <section className="myntra-banner">
+        <div className="myntra-banner__text">
+          <span className="myntra-banner__big">For Her</span>
+          <span className="myntra-banner__sub">Save up to ₹200</span>
         </div>
-        <div className="hero__image">
+        <div className="myntra-banner__coupon">
+          <span className="myntra-banner__coupon-label">Offer</span>
+          <span className="myntra-banner__coupon-code">PAISLEY25</span>
+        </div>
+        <div className="myntra-banner__meta">Women-only saree edit | T&amp;C apply</div>
+        <div className="myntra-banner__badge">%</div>
+      </section>
+
+      <section className="hero hero--myntra">
+        <div className="hero__image hero__image--wide">
           <img
-            src="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Sambhalpuri_Saree_%28Blue%29.jpg/960px-Sambhalpuri_Saree_%28Blue%29.jpg"
-            alt="Featured saree"
+            key={HERO_IMAGES[heroImageIndex].src}
+            src={HERO_IMAGES[heroImageIndex].src}
+            alt={HERO_IMAGES[heroImageIndex].alt}
             fetchPriority="high"
             decoding="async"
           />
-          <div className="hero__image-label"><span>01</span><strong>The blue edit</strong></div>
+        </div>
+
+        <div className="hero__promo-card">
+          <div className="promo-card__eyebrow">Curated for Her</div>
+          <div className="promo-card__title">Luxury Saree Edit</div>
+          <div className="promo-card__offer">40-70% Off</div>
+          <p className="promo-card__text">Handpicked silks, soft cottons and bridal drapes for every celebration.</p>
+          <Link to="/shop" className="promo-card__button">Explore Collection</Link>
         </div>
       </section>
 
