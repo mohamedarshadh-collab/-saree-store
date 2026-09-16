@@ -1,13 +1,13 @@
 import { createTheme } from "@mui/material/styles";
 
-const rose = "#ff3f6c";
-const roseDark = "#e62b5d";
-const blush = "#fff1f5";
-const bg = "#f5f5f6";
+const rose = "#8f2742";
+const roseDark = "#6f1931";
+const blush = "#f9edf0";
+const bg = "#fbf9f7";
 const card = "#ffffff";
-const ink = "#282c3f";
-const inkSoft = "#7e818d";
-const stroke = "#e9e9eb";
+const ink = "#2b2525";
+const inkSoft = "#766d6b";
+const stroke = "#e8dfda";
 const success = "#03a685";
 
 const theme = createTheme({
@@ -34,24 +34,24 @@ const theme = createTheme({
     divider: stroke,
   },
   typography: {
-    fontFamily: "Inter, 'Segoe UI', sans-serif",
+    fontFamily: "Manrope, 'Segoe UI', sans-serif",
     h1: {
-      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontFamily: "Cormorant Garamond, Georgia, serif",
       fontWeight: 800,
       letterSpacing: "-0.04em",
     },
     h2: {
-      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontFamily: "Cormorant Garamond, Georgia, serif",
       fontWeight: 800,
       letterSpacing: "-0.04em",
     },
     h3: {
-      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontFamily: "Cormorant Garamond, Georgia, serif",
       fontWeight: 700,
       letterSpacing: "-0.03em",
     },
     button: {
-      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      fontFamily: "Manrope, 'Segoe UI', sans-serif",
       fontWeight: 700,
       textTransform: "none",
       letterSpacing: 0.2,

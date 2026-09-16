@@ -9,13 +9,14 @@ export default function Shop() {
   const search = searchParams.get("search") || "";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
+    setError("");
     getProducts({ category, search }).then((res) => {
       setProducts(res.data);
-      setLoading(false);
-    });
+    }).catch(() => setError("We could not load these sarees. Please try again.")).finally(() => setLoading(false));
   }, [category, search]);
 
   const title = search ? `Search results for "${search}"` : category === "All" ? "All Sarees" : category;
@@ -39,6 +40,8 @@ export default function Shop() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <div className="empty-state">{error}</div>
       ) : products.length === 0 ? (
         <div className="empty-state">
           {search ? `No sarees found for "${search}". Try another keyword.` : "No sarees found in this category yet."}

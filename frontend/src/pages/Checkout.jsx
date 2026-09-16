@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { createRazorpayOrder, verifyPayment } from "../api/api";
@@ -22,6 +22,16 @@ export default function Checkout() {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (window.Razorpay || document.querySelector('script[data-razorpay="true"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.dataset.razorpay = "true";
+    document.body.appendChild(script);
+    return () => script.remove();
+  }, []);
+
   const total = subtotal + (paymentMethod === "COD" ? COD_CHARGE : 0);
   const amountDueNow = paymentMethod === "COD" ? COD_CHARGE : total;
 
@@ -29,14 +39,20 @@ export default function Checkout() {
     setCustomer({ ...customer, [e.target.name]: e.target.value });
   };
 
-  const isFormValid = () =>
-    customer.name && customer.phone && customer.address && customer.city && customer.state && customer.pincode;
+  const isFormValid = () => {
+    const phoneValid = /^[6-9]\d{9}$/.test(customer.phone.replace(/\D/g, ""));
+    const pincodeValid = /^\d{6}$/.test(customer.pincode.trim());
+    return Boolean(
+      customer.name.trim() && customer.address.trim() && customer.city.trim() &&
+      customer.state.trim() && phoneValid && pincodeValid
+    );
+  };
 
   const handlePayment = async (e) => {
     e.preventDefault();
     setError("");
     if (!isFormValid()) {
-      setError("Please fill in all delivery details.");
+      setError("Enter a valid name, Indian phone number, address, city, state and 6-digit pincode.");
       return;
     }
     if (items.length === 0) return;
@@ -91,6 +107,9 @@ export default function Checkout() {
         },
       };
 
+      if (typeof window.Razorpay !== "function") {
+        throw new Error("Payment checkout is unavailable. Please disable blockers or try again.");
+      }
       const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", function () {
         setError("Payment failed. Please try again.");

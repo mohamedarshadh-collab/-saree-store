@@ -51,14 +51,20 @@ export default function CompleteLook({ product }) {
   };
 
   const addCompleteLook = () => {
-    addToCart(product, 1);
-    selectedAccessories.forEach((item) => addToCart({
-      _id: item._id,
-      name: item.name,
-      category: item.category,
-      price: item.price,
-      images: [item.image],
-    }, 1));
+    const customization = {
+      variant: "Original shade",
+      blouseStyle: "classic",
+      jewellery: selectedAccessories
+        .filter((item) => item.category === "Jewellery")
+        .map(() => "temple-set"),
+      accessories: selectedAccessories
+        .filter((item) => item.category === "Potli & accessories")
+        .map((item) => item._id.endsWith("-potli") ? "silk-potli" : "brocade-clutch"),
+      giftWrap: false,
+      giftMessage: "",
+      expressDelivery: false,
+    };
+    addToCart(product, 1, customization, lookTotal);
     setAdded(true);
   };
 

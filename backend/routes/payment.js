@@ -7,10 +7,12 @@ const Product = require("../models/Product");
 const { createShipment } = require("./tracking");
 const mongoose = require("mongoose");
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
+  ? new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    })
+  : null;
 
 const COD_EXTRA_CHARGE = Number(process.env.COD_EXTRA_CHARGE || 100);
 const BLOUSE_PRICES = { classic: 0, statement: 499, sleeveless: 699 };
@@ -81,6 +83,9 @@ async function computeSubtotal(items) {
 // the rest of the total is collected as cash on delivery.
 router.post("/create-order", async (req, res) => {
   try {
+    if (!razorpay) {
+      return res.status(503).json({ message: "Online payments are not configured yet." });
+    }
     const { items, paymentMethod } = req.body;
     if (!items || !items.length) return res.status(400).json({ message: "Cart is empty" });
     if (!['ONLINE', 'COD'].includes(paymentMethod)) {
@@ -130,6 +135,21 @@ router.post("/verify", async (req, res) => {
       customer,
     } = req.body;
 
+    if (!razorpay || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(503).json({ message: "Online payments are not configured yet." });
+    }
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Incomplete payment response" });
+    }
+    if (!Array.isArray(items) || !items.length || !['ONLINE', 'COD'].includes(paymentMethod)) {
+      return res.status(400).json({ message: "Invalid payment details" });
+    }
+
+    const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+    if (existingOrder) {
+      return res.json({ verified: true, message: "Payment already accepted", order: existingOrder });
+    }
+
     // 1) Verify Razorpay signature — this is what actually confirms the payment,
     // e.g. after paying via UPI, card, netbanking, wallet, etc.
     const expectedSignature = crypto
@@ -137,7 +157,9 @@ router.post("/verify", async (req, res) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const signatureBuffer = Buffer.from(razorpay_signature);
+    if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
       return res.status(400).json({ verified: false, message: "Payment verification failed" });
     }
 
@@ -145,6 +167,11 @@ router.post("/verify", async (req, res) => {
     const { subtotal, verifiedItems } = await computeSubtotal(items);
     const codCharge = paymentMethod === "COD" ? COD_EXTRA_CHARGE : 0;
     const totalAmount = subtotal + codCharge;
+    const expectedAmount = (paymentMethod === "COD" ? codCharge : subtotal) * 100;
+    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    if (razorpayOrder.currency !== "INR" || Number(razorpayOrder.amount) !== Math.round(expectedAmount)) {
+      return res.status(400).json({ verified: false, message: "Payment amount does not match the order" });
+    }
 
     // 3) Create the order record
     const order = await Order.create({

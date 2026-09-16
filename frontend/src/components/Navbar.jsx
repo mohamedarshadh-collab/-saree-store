@@ -19,6 +19,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -33,6 +34,7 @@ export default function Navbar() {
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     const trimmed = searchTerm.trim();
+    setMenuOpen(false);
 
     if (!trimmed) {
       navigate("/shop");
@@ -50,9 +52,22 @@ export default function Navbar() {
             <span className="brand-mark">P</span>
           </Link>
 
-          <nav className="navbar__menu" aria-label="Main categories">
+          <button
+            className="navbar__toggle"
+            type="button"
+            aria-expanded={menuOpen}
+            aria-controls="site-navigation"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <nav id="site-navigation" className={`navbar__menu${menuOpen ? " is-open" : ""}`} aria-label="Main categories">
             {CATEGORIES.map(({ label, value }) => (
-              <NavLink key={label} to={`/shop?category=${encodeURIComponent(value)}`} className="navbar__menu-link">
+              <NavLink key={label} to={`/shop?category=${encodeURIComponent(value)}`} className="navbar__menu-link" onClick={() => setMenuOpen(false)}>
                 {label}
                 {label === "New In" && <span className="new-pill">NEW</span>}
               </NavLink>

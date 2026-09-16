@@ -18,6 +18,7 @@ function TrackingTimeline({ order }) {
     try {
       const { data } = await getTracking(order._id);
       setTracking(data);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -71,12 +72,18 @@ export default function Orders() {
   const [phone, setPhone] = useState("");
   const [searched, setSearched] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [error, setError] = useState("");
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    const { data } = await getOrders(phone);
-    setOrders(data);
-    setSearched(true);
+    setError("");
+    try {
+      const { data } = await getOrders(phone.trim());
+      setOrders(data);
+      setSearched(true);
+    } catch {
+      setError("We could not find orders right now. Please try again.");
+    }
   };
 
   return (
@@ -92,6 +99,8 @@ export default function Orders() {
         />
         <button className="btn" type="submit">Find Orders</button>
       </form>
+
+      {error && <p className="review-form__error">{error}</p>}
 
       {searched && orders.length === 0 && (
         <div className="empty-state">No orders found for this phone number.</div>

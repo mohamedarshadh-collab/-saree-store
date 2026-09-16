@@ -39,6 +39,7 @@ export default function Home() {
   const [featured, setFeatured] = useState([]);
   const [categoryImages, setCategoryImages] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [heroImageIndex, setHeroImageIndex] = useState(0);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function Home() {
         if (!images[product.category] && product.images?.[0]) images[product.category] = product.images[0];
         return images;
       }, {}));
-    }).finally(() => setLoading(false));
+    }).catch(() => setError("We could not load the collection. Please try again.")).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function Home() {
           </Button>
         </div>
         <div className="product-grid">
-          {loading ? <LoadingState label="Finding favourites" /> : featured.map((p) => (
+          {loading ? <LoadingState label="Finding favourites" /> : error ? <div className="empty-state inline-empty">{error}</div> : featured.map((p) => (
             <ProductCard key={p._id} product={p} />
           ))}
         </div>

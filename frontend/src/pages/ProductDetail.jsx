@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
+  const [productError, setProductError] = useState("");
   const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -22,11 +23,13 @@ export default function ProductDetail() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   useEffect(() => {
-    getProduct(id).then((res) => setProduct(res.data));
+    setProductError("");
+    getProduct(id).then((res) => setProduct(res.data)).catch(() => setProductError("This saree could not be loaded. Please return to the shop and try again."));
     getReviews(id).then((res) => setReviews(res.data)).catch(() => setReviews([]));
     setAdded(false);
   }, [id]);
 
+  if (productError) return <div className="empty-state">{productError}</div>;
   if (!product) return <LoadingState label="Loading saree" />;
 
   const handleAdd = () => {
