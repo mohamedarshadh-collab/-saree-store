@@ -852,18 +852,6 @@ h1, h2, h3 {
   padding: 12px 2px 0;
 }
 
-.trust-strip {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  max-width: 1200px;
-  margin: 0 auto 28px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-
 .trust-item__icon {
   display: block;
   color: var(--brand);
@@ -1343,6 +1331,12 @@ input:focus, select:focus, textarea:focus {
   margin-top: 16px;
 }
 
+.tracking-error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
 .mock-flag {
   display: inline-block;
   background: #fff4d6;
@@ -1457,14 +1451,16 @@ input:focus, select:focus, textarea:focus {
 
 /* ---------- Trust badges ---------- */
 .trust-strip {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 24px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   padding: 26px 24px;
   max-width: 1200px;
   margin: 0 auto;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
 }
 
 .trust-item {
@@ -1744,6 +1740,64 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+@media (max-width: 900px) {
+  .navbar__top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    padding: 10px 20px 12px;
+  }
+
+  .navbar__toggle {
+    display: block;
+    order: 3;
+  }
+
+  .navbar__search-wrap {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .navbar__menu {
+    display: none;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    padding: 8px 0 2px;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .navbar__menu.is-open {
+    display: flex;
+  }
+
+  .navbar__menu-link {
+    flex: 0 0 auto;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--card);
+  }
+
+  .navbar__actions {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .navbar__actions .profile-btn span:last-child,
+  .navbar__actions .action-link span:last-child {
+    display: none;
+  }
+}
+
 @media (max-width: 960px) {
   .hero, .pdp, .cart-layout, .checkout-layout {
     grid-template-columns: 1fr;
@@ -1755,7 +1809,7 @@ input:focus, select:focus, textarea:focus {
     width: min(360px, 42vw);
   }
   .product-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .cat-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1935,5 +1989,10 @@ input:focus, select:focus, textarea:focus {
   }
   .tracking-step {
     flex: 0 0 72px;
+  }
+
+  .orders-search {
+    flex-direction: column;
+    max-width: none !important;
   }
 }

@@ -11,9 +11,19 @@ const reviewRoutes = require("./routes/reviews");
 
 const app = express();
 
+const allowedOrigins = [
+	process.env.CLIENT_URL,
+	...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:5173", "http://127.0.0.1:5173"]),
+].filter(Boolean);
+
 connectDB();
 
-app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
+app.use(cors({
+	origin: (origin, callback) => {
+		if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+		return callback(new Error("Origin is not allowed by CORS"));
+	},
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("Saree Store API is running"));

@@ -12,13 +12,16 @@ const STAGES = [
 function TrackingTimeline({ order }) {
   const [tracking, setTracking] = useState(order.tracking);
   const [loading, setLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
 
   const refresh = async () => {
     setLoading(true);
+    setTrackingError("");
     try {
       const { data } = await getTracking(order._id);
       setTracking(data);
     } catch {
+      setTrackingError("Tracking is temporarily unavailable.");
     } finally {
       setLoading(false);
     }
@@ -48,6 +51,7 @@ function TrackingTimeline({ order }) {
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
+      {trackingError && <p className="tracking-error">{trackingError}</p>}
 
       <div className="tracking-timeline">
         {STAGES.map((s, i) => (
@@ -89,7 +93,7 @@ export default function Orders() {
   return (
     <section className="section">
       <h2 style={{ marginBottom: 18 }}>My Orders</h2>
-      <form onSubmit={handleSearch} style={{ display: "flex", gap: 10, maxWidth: 400, marginBottom: 30 }}>
+      <form className="orders-search" onSubmit={handleSearch} style={{ display: "flex", gap: 10, maxWidth: 400, marginBottom: 30 }}>
         <input
           placeholder="Enter phone number used while ordering"
           value={phone}

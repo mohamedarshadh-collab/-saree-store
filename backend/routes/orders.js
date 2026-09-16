@@ -6,7 +6,11 @@ const Order = require("../models/Order");
 router.get("/", async (req, res) => {
   try {
     const { phone } = req.query;
-    const filter = phone ? { "customer.phone": phone } : {};
+    const normalizedPhone = String(phone || "").replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: "A valid phone number is required" });
+    }
+    const filter = { "customer.phone": normalizedPhone };
     const orders = await Order.find(filter).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {

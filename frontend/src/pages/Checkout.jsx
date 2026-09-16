@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { createRazorpayOrder, verifyPayment } from "../api/api";
 
-const COD_CHARGE = 100;
+const COD_CHARGE = Number(import.meta.env.VITE_COD_EXTRA_CHARGE || 100);
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
@@ -21,13 +21,24 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("ONLINE");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
+  const [razorpayReady, setRazorpayReady] = useState(() => typeof window.Razorpay === "function");
 
   useEffect(() => {
-    if (window.Razorpay || document.querySelector('script[data-razorpay="true"]')) return;
+    if (window.Razorpay) {
+      setRazorpayReady(true);
+      return;
+    }
+    const existingScript = document.querySelector('script[data-razorpay="true"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", () => setRazorpayReady(true), { once: true });
+      return;
+    }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     script.dataset.razorpay = "true";
+    script.onload = () => setRazorpayReady(true);
+    script.onerror = () => setError("Payment checkout could not load. Check your connection and try again.");
     document.body.appendChild(script);
     return () => script.remove();
   }, []);
@@ -56,6 +67,10 @@ export default function Checkout() {
       return;
     }
     if (items.length === 0) return;
+    if (!razorpayReady || typeof window.Razorpay !== "function") {
+      setError("Payment checkout is still loading. Please try again in a moment.");
+      return;
+    }
 
     setPlacing(true);
     try {
@@ -66,20 +81,29 @@ export default function Checkout() {
       const { data: rpOrder } = await createRazorpayOrder({ items: cartItems, paymentMethod });
 
       // 2) Open Razorpay's checkout widget (supports UPI, cards, netbanking, wallets)
+      let paymentFailed = false;
       const options = {
         key: rpOrder.keyId,
         amount: rpOrder.amount,
         currency: rpOrder.currency,
         name: "Paisley & Pallu",
-        description:
-          paymentMethod === "COD" ? "COD advance payment (₹100)" : "Saree order payment",
+        description: paymentMethod === "COD" ? `COD advance payment (₹${COD_CHARGE})` : "Saree order payment",
         order_id: rpOrder.razorpayOrderId,
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true,
+        },
         prefill: {
           name: customer.name,
           email: customer.email,
           contact: customer.phone,
         },
         theme: { color: "#6e1423" },
+        notes: {
+          payment_mode: "Indian test methods: UPI, netbanking, wallets or supported Indian cards",
+        },
         handler: async function (response) {
           try {
             const { data } = await verifyPayment({
@@ -103,16 +127,23 @@ export default function Checkout() {
         modal: {
           ondismiss: function () {
             setPlacing(false);
+            if (!paymentFailed) {
+              setError("Payment was cancelled. Your cart is safe; you can try again.");
+            }
           },
         },
       };
 
-      if (typeof window.Razorpay !== "function") {
-        throw new Error("Payment checkout is unavailable. Please disable blockers or try again.");
-      }
       const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", function () {
-        setError("Payment failed. Please try again.");
+      rzp.on("payment.failed", function (response) {
+        paymentFailed = true;
+        const description = response?.error?.description || response?.error?.reason || "Payment was declined.";
+        const isInternationalCard = /international/i.test(description);
+        setError(
+          isInternationalCard
+            ? "This Razorpay test account does not support international cards. Try UPI, netbanking, wallets, or a supported Indian test card."
+            : `${description} You can retry with another payment method.`
+        );
         setPlacing(false);
       });
       rzp.open();
@@ -176,7 +207,7 @@ export default function Checkout() {
             />
             <div>
               <strong>Pay Online (Razorpay)</strong>
-              <small>UPI, Cards, Netbanking &amp; Wallets — pay full amount now</small>
+              <small>UPI, Indian test cards, Netbanking &amp; Wallets — pay full amount now</small>
             </div>
           </label>
           <label className={`payment-option ${paymentMethod === "COD" ? "selected" : ""}`}>
@@ -196,7 +227,7 @@ export default function Checkout() {
           </label>
         </div>
 
-        {error && <p style={{ color: "var(--danger)", fontSize: 14 }}>{error}</p>}
+        {error && <p role="alert" aria-live="assertive" style={{ color: "var(--danger)", fontSize: 14 }}>{error}</p>}
 
         <button className="btn" type="submit" disabled={placing} style={{ width: "100%" }}>
           {placing
@@ -210,7 +241,7 @@ export default function Checkout() {
       <div className="summary-card">
         <h3 style={{ marginBottom: 14 }}>Order Summary</h3>
         {items.map((i) => (
-          <div className="summary-row" key={i.productId}>
+          <div className="summary-row" key={i.cartItemId || i.productId}>
             <span>{i.name} × {i.qty}</span>
             <span>₹{(i.price * i.qty).toLocaleString("en-IN")}</span>
           </div>

@@ -14,7 +14,8 @@ const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
     })
   : null;
 
-const COD_EXTRA_CHARGE = Number(process.env.COD_EXTRA_CHARGE || 100);
+const configuredCodCharge = Number(process.env.COD_EXTRA_CHARGE || 100);
+const COD_EXTRA_CHARGE = Number.isFinite(configuredCodCharge) && configuredCodCharge > 0 ? configuredCodCharge : 100;
 const BLOUSE_PRICES = { classic: 0, statement: 499, sleeveless: 699 };
 const JEWELLERY_PRICES = { "temple-set": 1299, "pearl-set": 899 };
 const ACCESSORY_PRICES = { "silk-potli": 699, "brocade-clutch": 899 };
@@ -39,6 +40,28 @@ function customizationCharge(customization = {}) {
     (customization.expressDelivery ? EXPRESS_PRICE : 0);
 }
 
+function sanitizeCustomer(customer = {}) {
+  const normalizedPhone = String(customer.phone || "").replace(/\D/g, "");
+  const sanitized = {
+    name: String(customer.name || "").trim(),
+    phone: normalizedPhone,
+    email: String(customer.email || "").trim(),
+    address: String(customer.address || "").trim(),
+    city: String(customer.city || "").trim(),
+    state: String(customer.state || "").trim(),
+    pincode: String(customer.pincode || "").trim(),
+  };
+  if (!sanitized.name || sanitized.name.length > 100 || !sanitized.address || sanitized.address.length > 300 ||
+      !sanitized.city || sanitized.city.length > 80 || !sanitized.state || sanitized.state.length > 80 ||
+      !/^[6-9]\d{9}$/.test(sanitized.phone) || !/^\d{6}$/.test(sanitized.pincode) ||
+      (sanitized.email && !/^\S+@\S+\.\S+$/.test(sanitized.email))) {
+    const error = new Error("Delivery details are invalid");
+    error.statusCode = 400;
+    throw error;
+  }
+  return sanitized;
+}
+
 // Helper: recompute subtotal server-side from cart items (never trust client price)
 async function computeSubtotal(items) {
   let subtotal = 0;
@@ -61,6 +84,11 @@ async function computeSubtotal(items) {
       error.statusCode = 400;
       throw error;
     }
+    if (qty > product.stock) {
+      const error = new Error(`${product.name} has only ${product.stock} item${product.stock === 1 ? "" : "s"} left.`);
+      error.statusCode = 409;
+      throw error;
+    }
     const customization = it.customization || null;
     const itemPrice = product.price + (customization ? customizationCharge(customization) : 0);
     subtotal += itemPrice * qty;
@@ -74,6 +102,31 @@ async function computeSubtotal(items) {
     });
   }
   return { subtotal, verifiedItems };
+}
+
+async function reserveStock(items) {
+  const quantities = new Map();
+  items.forEach((item) => quantities.set(item.productId, (quantities.get(item.productId) || 0) + Number(item.qty)));
+  const reserved = [];
+  try {
+    for (const [productId, qty] of quantities) {
+      const product = await Product.findOneAndUpdate(
+        { _id: productId, stock: { $gte: qty } },
+        { $inc: { stock: -qty } },
+        { new: true }
+      );
+      if (!product) {
+        const error = new Error("One or more products sold out while payment was processing.");
+        error.statusCode = 409;
+        throw error;
+      }
+      reserved.push({ productId, qty });
+    }
+    return reserved;
+  } catch (error) {
+    await Promise.all(reserved.map(({ productId, qty }) => Product.updateOne({ _id: productId }, { $inc: { stock: qty } })));
+    throw error;
+  }
 }
 
 // POST /api/payment/create-order
@@ -144,6 +197,7 @@ router.post("/verify", async (req, res) => {
     if (!Array.isArray(items) || !items.length || !['ONLINE', 'COD'].includes(paymentMethod)) {
       return res.status(400).json({ message: "Invalid payment details" });
     }
+    const sanitizedCustomer = sanitizeCustomer(customer);
 
     const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
     if (existingOrder) {
@@ -163,30 +217,42 @@ router.post("/verify", async (req, res) => {
       return res.status(400).json({ verified: false, message: "Payment verification failed" });
     }
 
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+    if (payment.order_id !== razorpay_order_id || payment.status !== "captured") {
+      return res.status(400).json({ verified: false, message: "Payment is not confirmed" });
+    }
+
     // 2) Recompute price server-side (never trust client totals)
     const { subtotal, verifiedItems } = await computeSubtotal(items);
     const codCharge = paymentMethod === "COD" ? COD_EXTRA_CHARGE : 0;
     const totalAmount = subtotal + codCharge;
     const expectedAmount = (paymentMethod === "COD" ? codCharge : subtotal) * 100;
     const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
-    if (razorpayOrder.currency !== "INR" || Number(razorpayOrder.amount) !== Math.round(expectedAmount)) {
+    if (razorpayOrder.currency !== "INR" || Number(razorpayOrder.amount) !== Math.round(expectedAmount) || Number(payment.amount) !== Math.round(expectedAmount)) {
       return res.status(400).json({ verified: false, message: "Payment amount does not match the order" });
     }
 
-    // 3) Create the order record
-    const order = await Order.create({
-      items: verifiedItems,
-      customer,
-      paymentMethod,
-      paymentStatus: "PAID", // full amount for ONLINE, ₹100 advance for COD
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      razorpaySignature: razorpay_signature,
-      subtotal,
-      codCharge,
-      totalAmount,
-      orderStatus: "CONFIRMED",
-    });
+    // 3) Reserve stock atomically before creating the order record.
+    const reservedStock = await reserveStock(items);
+    let order;
+    try {
+      order = await Order.create({
+        items: verifiedItems,
+        customer: sanitizedCustomer,
+        paymentMethod,
+        paymentStatus: "PAID", // full amount for ONLINE, ₹100 advance for COD
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        subtotal,
+        codCharge,
+        totalAmount,
+        orderStatus: "CONFIRMED",
+      });
+    } catch (error) {
+      await Promise.all(reservedStock.map(({ productId, qty }) => Product.updateOne({ _id: productId }, { $inc: { stock: qty } })));
+      throw error;
+    }
 
     // 4) Hand off to delivery.com (or mock) to create a shipment / tracking id
     const shipment = await createShipment(order);

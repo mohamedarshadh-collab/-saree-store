@@ -39,7 +39,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "PAID", "FAILED"],
       default: "PENDING",
     },
-    razorpayOrderId: String,
+    razorpayOrderId: { type: String, unique: true, sparse: true },
     razorpayPaymentId: String,
     razorpaySignature: String,
 

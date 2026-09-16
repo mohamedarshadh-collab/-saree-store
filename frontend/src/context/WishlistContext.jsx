@@ -4,8 +4,13 @@ const WishlistContext = createContext(null);
 
 export function WishlistProvider({ children }) {
   const [items, setItems] = useState(() => {
-    const saved = localStorage.getItem("saree_wishlist");
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem("saree_wishlist");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      localStorage.removeItem("saree_wishlist");
+      return [];
+    }
   });
 
   useEffect(() => {

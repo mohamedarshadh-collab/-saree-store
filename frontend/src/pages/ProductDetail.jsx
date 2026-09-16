@@ -17,6 +17,7 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
   const [reviewError, setReviewError] = useState("");
   const [reviewSent, setReviewSent] = useState(false);
@@ -24,13 +25,18 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setProductError("");
+    setProduct(null);
+    setActiveImg(0);
+    setReviewsLoading(true);
     getProduct(id).then((res) => setProduct(res.data)).catch(() => setProductError("This saree could not be loaded. Please return to the shop and try again."));
-    getReviews(id).then((res) => setReviews(res.data)).catch(() => setReviews([]));
+    getReviews(id).then((res) => setReviews(res.data)).catch(() => setReviews([])).finally(() => setReviewsLoading(false));
     setAdded(false);
   }, [id]);
 
   if (productError) return <div className="empty-state">{productError}</div>;
   if (!product) return <LoadingState label="Loading saree" />;
+
+  const images = product.images?.filter(Boolean) || [];
 
   const handleAdd = () => {
     addToCart(product, 1);
@@ -72,7 +78,7 @@ export default function ProductDetail() {
     <section className="pdp">
       <div className="pdp__gallery">
         <div className="pdp__thumbs">
-          {product.images.map((img, i) => (
+          {images.map((img, i) => (
             <img
               key={i}
               src={img}
@@ -83,7 +89,7 @@ export default function ProductDetail() {
           ))}
         </div>
         <div className="pdp__main-img">
-          <img src={product.images[activeImg]} alt={product.name} />
+          {images.length ? <img src={images[activeImg] || images[0]} alt={product.name} /> : <div className="image-placeholder">Image unavailable</div>}
         </div>
       </div>
 
@@ -152,7 +158,7 @@ export default function ProductDetail() {
 
         <div className="review-layout">
           <div className="review-list">
-            {reviews.length === 0 ? <p className="review-empty">Be the first to review this saree.</p> : reviews.map((review) => (
+            {reviewsLoading ? <p className="review-empty">Loading reviews...</p> : reviews.length === 0 ? <p className="review-empty">Be the first to review this saree.</p> : reviews.map((review) => (
               <article className="review-item" key={review._id}>
                 <div className="review-item__top"><strong>{review.name}</strong><span className="review-stars">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span></div>
                 <p>{review.comment}</p>
